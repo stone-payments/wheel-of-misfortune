@@ -1,30 +1,29 @@
 /* This is a modified version of Jeremy Rue's Wheel of Fortune
  * http://bl.ocks.org/jrue/a2aaf36b3c096925ccbf */
 
+function custom_colors(n) {
+  var colors= [ "#388E3C", "#1976D2", "#D32F2F", "#FFA000", "#388E3C", "#990099", "#0099c6", "#C2185B", "#81C784", "#D32F2F", "#1976D2", "#994499", "#4DD0E1", "#AED581", "#536DFE", "#FBC02D", "#C62828", "#AB47BC", "#66BB6A", "#90A4AE", "#0D47A1"];
+  return colors[n % colors.length];
+}
+
 var padding = { top: 20, right: 40, bottom: 0, left: 0 },
-    w = 600 - padding.left - padding.right,
-    h = 600 - padding.top - padding.bottom,
+    w = 500 - padding.left - padding.right,
+    h = 500 - padding.top - padding.bottom,
     r = Math.min(w, h) / 2,
     rotation = 0,
     oldrotation = 0,
     picked = 100000,
-    oldpick = [],
-    color = d3.scale.category20();
+    oldpick = [];
 
-
-
-d3.json("https://dastergon.gr/wheel-of-misfortune/incidents/general_incidents.json", function (error, data) {
+d3.json("./incidents/general_incidents.json", function (error, data) {
     if (error) throw error;
     var svg = d3.select("#wheel")
         .append("svg")
         .data([data])
-        .attr("width", w + padding.left + padding.right)
-        .attr("height", h + padding.top + padding.bottom);
+        .attr("viewBox", "0 0 500 500");
 
     var container = svg.append("g")
-        .attr("class", "chartholder")
         .attr("transform", "translate(" + (w / 2 + padding.left) + "," + (h / 2 + padding.top) + ")");
-
 
     var vis = container
         .append("g");
@@ -43,7 +42,7 @@ d3.json("https://dastergon.gr/wheel-of-misfortune/incidents/general_incidents.js
 
 
     arcs.append("path")
-        .attr("fill", function (d, i) { return color(i); })
+        .attr("fill", function (d, i) { return custom_colors(i); })
         .attr("d", function (d) { return arc(d); });
 
     // add the text
@@ -55,17 +54,14 @@ d3.json("https://dastergon.gr/wheel-of-misfortune/incidents/general_incidents.js
     })
         .attr("text-anchor", "end")
         .text(function (d, i) {
-            return data[i].label;
+            return data[i].title;
         });
-
     container.on("click", spin);
 
     function spin(d) {
         container.on("click", null);
         //all slices have been seen, all done
-        console.log("OldPick: " + oldpick.length, "Data length: " + data.length);
         if (oldpick.length == data.length) {
-            console.log("done");
             container.on("click", null);
             return;
         }
@@ -95,10 +91,13 @@ d3.json("https://dastergon.gr/wheel-of-misfortune/incidents/general_incidents.js
                     .attr("fill", "#111");
                 //populate incident
                 d3.select("#incident p")
-                    .text("Scenario: " + data[picked].description);
+                    .html("<h4 class=\"f4 center mw6\">" + data[picked].title + "</h4>" + data[picked].scenario);
                 oldrotation = rotation;
                 container.on("click", spin);
             });
+
+        // start the timewatch
+        container.on("click", stopwatch.start(), changeControls())
     }
 
     //make arrow
@@ -118,10 +117,10 @@ d3.json("https://dastergon.gr/wheel-of-misfortune/incidents/general_incidents.js
     //spin text
     container.append("text")
         .attr("x", 0)
-        .attr("y", 12)
+        .attr("y", 10)
         .attr("text-anchor", "middle")
         .text("SPIN")
-        .style({ "background-color": "#e25822", "font-weight": "bold", "font-size": "20px" });
+        .style({ "color": "white", "font-weight": "bold", "font-size": "18px" });
 
     function rotTween(to) {
         var i = d3.interpolate(oldrotation % 360, rotation);
